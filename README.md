@@ -1,41 +1,17 @@
-# UPDATE
+# slim-load-recorder
 
-Starting from [version 1.26](https://github.com/serverless/serverless/releases/tag/v1.26.0) Serverless Framework includes two Golang templates:
+## Overview
+Work In Progress
 
-* `aws-go` - basic template with two functions
-* `aws-go-dep` - **recommended** template using [`dep`](https://github.com/golang/dep) package manager
+## Requirements
+* Serverless Framework
+* AWS developer account
 
-You can use them with `create` command:
+## Usage
+1. Build
+`$ env GOOS=linux go build -o bin/main`
 
-```
-serverless create -t aws-go-dep
-```
+2. Deploy
+`$ serverless deploy`
 
-Original README below.
-
----
-
-# Serverless Template for Golang
-
-This repository contains template for creating serverless services written in Golang.
-
-## Quick Start
-
-1. Create a new service based on this template
-
-```
-serverless create -u https://github.com/serverless/serverless-golang/ -p myservice
-```
-
-2. Compile function
-
-```
-cd myservice
-GOOS=linux go build -o bin/main
-```
-
-3. Deploy!
-
-```
-serverless deploy
-```
+3. Access to your endpoint 
