@@ -10,7 +10,6 @@ type Response struct {
 }
 
 func Handler(request events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
-	//return events.APIGatewayProxyResponse{Body: request.Body, StatusCode: 200}, nil
 	res := Response{Message: "hello lambda"}
 	return events.APIGatewayProxyResponse{Body: res.Message, StatusCode: 200}, nil
 }
