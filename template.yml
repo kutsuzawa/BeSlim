@@ -13,3 +13,6 @@ Resources:
           Properties:
             Path: /slim
             Method: get
+      Environment:
+        Variables:
+          APP_ENV: local

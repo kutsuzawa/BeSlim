@@ -26,11 +26,16 @@ provider:
   region: us-east-1
 
 # you can add statements to the Lambda function's IAM Role here
-#  iamRoleStatements:
+  iamRoleStatements:
 #    - Effect: "Allow"
 #      Action:
 #        - "s3:ListBucket"
 #      Resource: { "Fn::Join" : ["", ["arn:aws:s3:::", { "Ref" : "ServerlessDeploymentBucket" } ] ]  }
+    - Effect: "Allow"
+      Action:
+        - "s3:*"
+          #Resource: { "Fn::Join" : ["", ["arn:aws:s3:::*", { "Ref" : "ServerlessDeploymentBucket" } ] ]  }
+      Resource: "arn:aws:s3:::*"
 #    - Effect: "Allow"
 #      Action:
 #        - "s3:PutObject"
@@ -86,8 +91,11 @@ functions:
 #          trigger: PreSignUp
 
 #    Define function environment variables here
-#    environment:
-#      variable2: value2
+    environment:
+      APP_ENV: lambda
+      BUCKET: slim-load-recorder-dev-serverlessdeploymentbucket-136qu1ttu0npz
+      KEY: slim-load-recorder-firebase-adminsdk-2uhah-8cc1679303.json
+      REGION: ${self:provider.region}
 
 # you can add CloudFormation resource templates here
 #resources:
