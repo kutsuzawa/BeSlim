@@ -23,17 +23,17 @@ type HealthData struct {
 	Distance float64 `json:"distance"`
 }
 
-func Handler(request events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
-	logger, _ := zap.NewProduction()
-	defer logger.Sync()
-	// parse post data
-	buf := bytes.NewBufferString(request.Body)
-	data := &HealthData{}
-	if err := json.NewDecoder(buf).Decode(data); err != nil {
+type handler struct {
+	logger *zap.Logger
+}
+
+func (h *handler) ServeHTTP(request events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
+	data, err := parsePostData(request)
+	if err != nil {
 		res := Response{Message: err.Error()}
 		return events.APIGatewayProxyResponse{Body: res.Message, StatusCode: http.StatusInternalServerError}, nil
 	}
-	logger.Debug("post data",
+	h.logger.Info("post data",
 		zap.Float64("weight", data.Weight),
 		zap.Float64("distance", data.Distance),
 	)
@@ -52,6 +52,18 @@ func Handler(request events.APIGatewayProxyRequest) (events.APIGatewayProxyRespo
 	return events.APIGatewayProxyResponse{Body: res.Message, StatusCode: http.StatusOK}, nil
 }
 
+func parsePostData(request events.APIGatewayProxyRequest) (*HealthData, error) {
+	buf := bytes.NewBufferString(request.Body)
+	data := &HealthData{}
+	if err := json.NewDecoder(buf).Decode(data); err != nil {
+		return nil, err
+	}
+	return data, nil
+}
+
 func main() {
-	lambda.Start(Handler)
+	logger, _ := zap.NewProduction()
+	defer logger.Sync()
+	handler := handler{logger}
+	lambda.Start(handler.ServeHTTP)
 }

@@ -8,8 +8,10 @@ build:
 
 .PHONY: lambda
 lambda:
+	make build
 	sls deploy
 
 .PHONY: local
 local:
+	make build
 	env APP_ENV=local sam local start-api

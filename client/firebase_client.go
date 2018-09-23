@@ -2,7 +2,6 @@ package client
 
 import (
 	"context"
-	"log"
 	"os"
 	"time"
 
@@ -26,7 +25,6 @@ type Database struct {
 func NewDatabase() (*Database, error) {
 	var credentialPath string
 	ctx := context.Background()
-	log.Printf("[DEBUG] APP_ENV: %s\n", os.Getenv("APP_ENV"))
 	if os.Getenv("APP_ENV") != "local" {
 		var err error
 		credentialPath, err = getCredentialPathFromS3()
