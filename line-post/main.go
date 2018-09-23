@@ -3,12 +3,12 @@ package main
 import (
 	"bytes"
 	"encoding/json"
-	"log"
 	"net/http"
 
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-lambda-go/lambda"
 	"github.com/kutsuzawa/slim-load-recorder/client"
+	"go.uber.org/zap"
 )
 
 // Response is format for response from lambda
@@ -24,14 +24,21 @@ type HealthData struct {
 }
 
 func Handler(request events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
+	logger, _ := zap.NewProduction()
+	defer logger.Sync()
+	// parse post data
 	buf := bytes.NewBufferString(request.Body)
-	log.Println(buf.String())
 	data := &HealthData{}
 	if err := json.NewDecoder(buf).Decode(data); err != nil {
 		res := Response{Message: err.Error()}
 		return events.APIGatewayProxyResponse{Body: res.Message, StatusCode: http.StatusInternalServerError}, nil
 	}
-	log.Printf("[DEBUG] weight: %f, distance: %f\n", data.Weight, data.Distance)
+	logger.Debug("post data",
+		zap.Float64("weight", data.Weight),
+		zap.Float64("distance", data.Distance),
+	)
+
+	// insert weight and distance data to DB
 	db, err := client.NewDatabase()
 	if err != nil {
 		res := Response{Message: err.Error()}
