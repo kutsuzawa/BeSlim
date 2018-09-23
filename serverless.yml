@@ -57,8 +57,8 @@ package:
    - ./bin/**
 
 functions:
-  slim:
-    handler: bin/main
+  line-post:
+    handler: bin/line-post
 
 #    The following are a few example events you can configure
 #    NOTE: Please make sure to change your handler code to work with those events
@@ -66,8 +66,8 @@ functions:
     events:
       - http:
 #          path: users/create
-          path: /slim
-          method: get
+          path: /line-post
+          method: post
 #      - s3: ${env:BUCKET}
 #      - schedule: rate(10 minutes)
 #      - sns: greeter-topic
