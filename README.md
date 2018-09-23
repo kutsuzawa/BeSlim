@@ -5,6 +5,8 @@ Work In Progress
 
 ## Requirements
 * Serverless Framework
+    
+    `npm install -g serverless`
 * AWS developer account
 
 ## Usage
@@ -14,7 +16,7 @@ Work In Progress
 2. Deploy
 `$ serverless deploy`
 
-3. Access to your endpoint 
+3. After finising upload your app, access to your endpoint 
 
 ### Run in local (Optional)
 1. Install
@@ -23,7 +25,7 @@ Work In Progress
 
 2. Run in local
 
-`$ sam local start-api`
+`$ env APP_ENV=local sam local start-api`
 
 3. Access to your local endpoint
 
