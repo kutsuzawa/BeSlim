@@ -1,6 +1,8 @@
 package main
 
 import (
+	"net/http"
+
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-lambda-go/lambda"
 	"github.com/kutsuzawa/slim-load-recorder/client"
@@ -15,11 +17,14 @@ func Handler(request events.APIGatewayProxyRequest) (events.APIGatewayProxyRespo
 	db, err := client.NewDatabase()
 	if err != nil {
 		res := Response{Message: err.Error()}
-		return events.APIGatewayProxyResponse{Body: res.Message, StatusCode: 500}, nil
+		return events.APIGatewayProxyResponse{Body: res.Message, StatusCode: http.StatusInternalServerError}, nil
 	}
-	db.AddUser("test_group", "test_user")
+	if err := db.AddUser("test_user", 71.8, 4.3); err != nil {
+		res := Response{Message: err.Error()}
+		return events.APIGatewayProxyResponse{Body: res.Message, StatusCode: http.StatusInternalServerError}, nil
+	}
 	res := Response{Message: "hello lambda"}
-	return events.APIGatewayProxyResponse{Body: res.Message, StatusCode: 200}, nil
+	return events.APIGatewayProxyResponse{Body: res.Message, StatusCode: http.StatusOK}, nil
 }
 
 func main() {

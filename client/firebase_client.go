@@ -4,6 +4,7 @@ import (
 	"context"
 	"log"
 	"os"
+	"time"
 
 	"cloud.google.com/go/firestore"
 	firebase "firebase.google.com/go"
@@ -21,7 +22,7 @@ type Database struct {
 
 // NewDatabase init Database.
 // We get credential.json for firebase from S3, then, we connect firestore.
-// Finaly, Database structure obtain *firestore.Client
+// Finally, Database structure obtain *firestore.Client
 func NewDatabase() (*Database, error) {
 	var credentialPath string
 	ctx := context.Background()
@@ -48,7 +49,7 @@ func NewDatabase() (*Database, error) {
 	return db, nil
 }
 
-// getCredentialPathFromS3 download credention file for firebase to 'credentialPath' in lambda.
+// getCredentialPathFromS3 download credential file for firebase to 'credentialPath' in lambda.
 func getCredentialPathFromS3() (string, error) {
 	// Please put credential.json for firebase to amazon S3.
 	// This file is a secret file. So, you set read/write permission for you only.
@@ -75,11 +76,12 @@ func getCredentialPathFromS3() (string, error) {
 }
 
 // AddUser add user information to firestore.
-func (db *Database) AddUser(gloupID, userID string) error {
+func (db *Database) AddUser(userID string, weight, distance float64) error {
 	ctx := context.Background()
-	_, _, err := db.Client.Collection("users").Add(ctx, map[string]interface{}{
-		"gloupID": gloupID,
-		"userID":  userID,
+	_, _, err := db.Client.Collection("users").Doc(userID).Collection("data").Add(ctx, map[string]interface{}{
+		"date":     time.Now(),
+		"weight":   weight,
+		"distance": distance,
 	})
 	if err != nil {
 		return err
