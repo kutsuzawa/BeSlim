@@ -17,5 +17,5 @@ script:
   - go test -coverprofile c.out github.com/kutsuzawa/slim-load-recorder/...
 after_script:
   - ./cc-test-reporter after-build --exit-code $TRAVIS_TEST_RESULT
-  - make lamda
+  - make lambda
 
