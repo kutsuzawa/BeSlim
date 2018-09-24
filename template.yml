@@ -5,13 +5,13 @@ Resources:
   post:
     Type: AWS::Serverless::Function
     Properties:
-      Handler: bin/load
+      Handler: bin/loads
       Runtime: go1.x
       Events:
         Vote:
           Type: Api
           Properties:
-            Path: /load
+            Path: /loads
             Method: post
       Environment:
         Variables:
