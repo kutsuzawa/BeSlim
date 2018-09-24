@@ -2,7 +2,7 @@
 #
 # This file is the main config file for your service.
 # It's very minimal at this point and uses default values.
-# You can always add more config options for more control.
+# You can always load more config options for more control.
 # We've included some commented out config examples here.
 # Just uncomment any of them to get that config option.
 #
@@ -25,7 +25,7 @@ provider:
   stage: dev
   region: us-east-1
 
-# you can add statements to the Lambda function's IAM Role here
+# you can load statements to the Lambda function's IAM Role here
   iamRoleStatements:
 #    - Effect: "Allow"
 #      Action:
@@ -57,8 +57,8 @@ package:
    - ./bin/**
 
 functions:
-  slim:
-    handler: bin/main
+  load:
+    handler: bin/load
 
 #    The following are a few example events you can configure
 #    NOTE: Please make sure to change your handler code to work with those events
@@ -66,8 +66,8 @@ functions:
     events:
       - http:
 #          path: users/create
-          path: /slim
-          method: get
+          path: /load
+          method: post
 #      - s3: ${env:BUCKET}
 #      - schedule: rate(10 minutes)
 #      - sns: greeter-topic
@@ -97,7 +97,7 @@ functions:
       KEY: slim-load-recorder-firebase-adminsdk-2uhah-8cc1679303.json
       REGION: ${self:provider.region}
 
-# you can add CloudFormation resource templates here
+# you can load CloudFormation resource templates here
 #resources:
 #  Resources:
 #    NewResource:

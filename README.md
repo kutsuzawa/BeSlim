@@ -5,18 +5,19 @@ Work In Progress
 
 ## Requirements
 * Serverless Framework
-    
-    `npm install -g serverless`
+
+`$ npm install -g serverless`
 * AWS developer account
 
 ## Usage
-1. Build
-`$ env GOOS=linux go build -o bin/main`
 
-2. Deploy
-`$ serverless deploy`
-
-3. After finising upload your app, access to your endpoint 
+```
+$ make setup
+$ make lambda
+```
+After finising upload your app, post to your endpoint.
+ex)
+`$ curl -X POST <YOUR ENDPOINT>:3000/load -H 'Content-Type:application/json' -d '{"weight":71.8, "distance":5.2}'`
 
 ### Run in local (Optional)
 1. Install
@@ -24,9 +25,11 @@ Work In Progress
 `$ npm install -g aws-sam-local`
 
 2. Run in local
-
-`$ env APP_ENV=local sam local start-api`
+```
+$ make setup
+$ make local
+```
 
 3. Access to your local endpoint
 
-`$ curl http://localhost:3000/slim`
+`$ curl -X POST http://localhost:3000/load -H 'Content-Type:application/json' -d '{"weight":71.8, "distance":5.2}' `
