@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"net/http"
+	"time"
 
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-lambda-go/lambda"
@@ -17,10 +18,16 @@ type Response struct {
 	Message string `json:"message"`
 }
 
-// HealthData has weight and distance
-type HealthData struct {
+// Recieve is LINE request.
+// 一時的にこの形
+// TODO: 本当のリクエストの形に合わせて宣言
+type Recieve struct {
+	UserID   string  `json:"user_id"`
 	Weight   float64 `json:"weight"`
 	Distance float64 `json:"distance"`
+	Date     string  `json:"date"`
+	Start_at string  `json:"start_at"`
+	End_at   string  `json:"end_at"`
 }
 
 type handler struct {
@@ -28,28 +35,31 @@ type handler struct {
 }
 
 func (h *handler) ServeHTTP(request events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
-	data, err := parsePostData(request)
+	rec, err := parseRequest(request)
 	if err != nil {
+		h.logger.Error("parse error", zap.String("error", err.Error()))
 		res := Response{Message: err.Error()}
 		return events.APIGatewayProxyResponse{Body: res.Message, StatusCode: http.StatusInternalServerError}, nil
 	}
 	h.logger.Info("post data",
-		zap.Float64("weight", data.Weight),
-		zap.Float64("distance", data.Distance),
+		zap.String("user_id", rec.UserID),
+		zap.Float64("weight", rec.Weight),
+		zap.Float64("distance", rec.Distance),
+		zap.Time("date", parseTimeStr(rec.Date)),
+		zap.Time("start_at", parseTimeStr(rec.Start_at)),
+		zap.Time("end_at", parseTimeStr(rec.End_at)),
 	)
 
-	// insert weight and distance data to DB
 	db, err := client.NewDatabase()
 	if err != nil {
 		res := Response{Message: err.Error()}
 		return events.APIGatewayProxyResponse{Body: res.Message, StatusCode: http.StatusInternalServerError}, nil
 	}
-	if err := db.AddUser("test_user", data.Weight, data.Distance); err != nil {
+	if err := db.AddLoad(rec.UserID, rec.Weight, rec.Distance, parseTimeStr(rec.Date)); err != nil {
 		res := Response{Message: err.Error()}
 		return events.APIGatewayProxyResponse{Body: res.Message, StatusCode: http.StatusInternalServerError}, nil
 	}
-
-	results, err := db.GetDataByUserID("test_user")
+	results, err := db.GetDataByUserID(rec.UserID, parseTimeStr(rec.Start_at), parseTimeStr(rec.End_at))
 	if err != nil {
 		res := Response{Message: err.Error()}
 		return events.APIGatewayProxyResponse{Body: res.Message, StatusCode: http.StatusInternalServerError}, nil
@@ -63,16 +73,21 @@ func (h *handler) ServeHTTP(request events.APIGatewayProxyRequest) (events.APIGa
 	return events.APIGatewayProxyResponse{Body: res.Message, StatusCode: http.StatusOK}, nil
 }
 
-func parsePostData(request events.APIGatewayProxyRequest) (*HealthData, error) {
+func parseRequest(request events.APIGatewayProxyRequest) (Recieve, error) {
 	buf := bytes.NewBufferString(request.Body)
-	data := &HealthData{}
-	if err := json.NewDecoder(buf).Decode(data); err != nil {
-		return nil, err
+	rec := Recieve{}
+	if err := json.NewDecoder(buf).Decode(&rec); err != nil {
+		return Recieve{}, err
 	}
-	return data, nil
+	return rec, nil
 }
 
-func encodeResults(results []client.Result) (string, error) {
+func parseTimeStr(timeStr string) time.Time {
+	t, _ := time.Parse("2006-01-02 15:04:05", timeStr)
+	return t
+}
+
+func encodeResults(results []client.Load) (string, error) {
 	buf := new(bytes.Buffer)
 	if err := json.NewEncoder(buf).Encode(results); err != nil {
 		return "", err
