@@ -87,7 +87,7 @@ func parseTimeStr(timeStr string) time.Time {
 	return t
 }
 
-func dbInit(appEnv string) (*client.Database, error) {
+func dbInit(appEnv string) (*client.Firebase, error) {
 	credentialPath := "./credential.json"
 	if appEnv != "local" {
 		credentialPath = "/tmp/credential.json"
@@ -96,7 +96,7 @@ func dbInit(appEnv string) (*client.Database, error) {
 			return nil, err
 		}
 	}
-	return client.NewDatabase(credentialPath)
+	return client.NewFirebase(credentialPath)
 }
 
 func encodeResults(results []client.Load) (string, error) {

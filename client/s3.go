@@ -9,12 +9,14 @@ import (
 	"github.com/aws/aws-sdk-go/service/s3/s3manager"
 )
 
+// S3 has information for connection AWS S3
 type S3 struct {
 	Region *string
 	Bucket *string
 	Key    *string
 }
 
+// NewS3 init S3
 func NewS3(region, bucket, key string) *S3 {
 	s3 := &S3{
 		Region: aws.String(region),
@@ -24,6 +26,7 @@ func NewS3(region, bucket, key string) *S3 {
 	return s3
 }
 
+// Download execute download file on S3 to lambda.
 func (s3 *S3) Download(lambdaPath string) error {
 	sess, err := session.NewSession(&aws.Config{Region: s3.Region})
 	if err != nil {

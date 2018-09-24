@@ -11,8 +11,8 @@ import (
 	"google.golang.org/api/option"
 )
 
-// Database has firebase client.
-type Database struct {
+// Firebase has firebase client.
+type Firebase struct {
 	Client *firestore.Client
 }
 
@@ -24,10 +24,10 @@ type Load struct {
 	Distance float64   `json:"distance" firestore:"distance"`
 }
 
-// NewDatabase init Database.
+// NewFirebase init Firebase.
 // We get credential.json for firebase from S3, then, we connect firestore.
-// Finally, Database structure obtain *firestore.Client
-func NewDatabase(credentialPath string) (*Database, error) {
+// Finally, Firebase structure obtain *firestore.Client
+func NewFirebase(credentialPath string) (*Firebase, error) {
 	ctx := context.Background()
 	opt := option.WithCredentialsFile(credentialPath)
 	app, err := firebase.NewApp(context.Background(), nil, opt)
@@ -38,12 +38,11 @@ func NewDatabase(credentialPath string) (*Database, error) {
 	if err != nil {
 		return nil, err
 	}
-	db := &Database{Client: client}
-	return db, nil
+	return &Firebase{Client: client}, nil
 }
 
 // AddLoad add data every user information to firestore.
-func (db *Database) AddLoad(userID string, weight, distance float64, date time.Time) error {
+func (db *Firebase) AddLoad(userID string, weight, distance float64, date time.Time) error {
 	ctx := context.Background()
 	load := Load{
 		Date:     date,
@@ -58,7 +57,7 @@ func (db *Database) AddLoad(userID string, weight, distance float64, date time.T
 }
 
 // GetDataByUserID execute searching weight and distance data by using userID.
-func (db *Database) GetDataByUserID(userID string, start time.Time, end time.Time) ([]Load, error) {
+func (db *Firebase) GetDataByUserID(userID string, start time.Time, end time.Time) ([]Load, error) {
 	ctx := context.Background()
 	iter := db.Client.Collection("users").Doc(userID).Collection("load").Where("date", ">", start).Where("date", "<", end).OrderBy("date", firestore.Asc).Documents(ctx)
 	var results []Load
