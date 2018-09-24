@@ -48,7 +48,18 @@ func (h *handler) ServeHTTP(request events.APIGatewayProxyRequest) (events.APIGa
 		res := Response{Message: err.Error()}
 		return events.APIGatewayProxyResponse{Body: res.Message, StatusCode: http.StatusInternalServerError}, nil
 	}
-	res := Response{Message: "hello lambda"}
+
+	results, err := db.GetDataByUserID("test_user")
+	if err != nil {
+		res := Response{Message: err.Error()}
+		return events.APIGatewayProxyResponse{Body: res.Message, StatusCode: http.StatusInternalServerError}, nil
+	}
+	message, err := encodeResults(results)
+	if err != nil {
+		res := Response{Message: err.Error()}
+		return events.APIGatewayProxyResponse{Body: res.Message, StatusCode: http.StatusInternalServerError}, nil
+	}
+	res := Response{Message: message}
 	return events.APIGatewayProxyResponse{Body: res.Message, StatusCode: http.StatusOK}, nil
 }
 
@@ -59,6 +70,14 @@ func parsePostData(request events.APIGatewayProxyRequest) (*HealthData, error) {
 		return nil, err
 	}
 	return data, nil
+}
+
+func encodeResults(results []client.Result) (string, error) {
+	buf := new(bytes.Buffer)
+	if err := json.NewEncoder(buf).Encode(results); err != nil {
+		return "", err
+	}
+	return buf.String(), nil
 }
 
 func main() {

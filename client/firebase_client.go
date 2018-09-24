@@ -2,6 +2,7 @@ package client
 
 import (
 	"context"
+	"errors"
 	"os"
 	"time"
 
@@ -11,12 +12,21 @@ import (
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/aws/aws-sdk-go/service/s3/s3manager"
+	"google.golang.org/api/iterator"
 	"google.golang.org/api/option"
 )
 
 // Database has firebase client.
 type Database struct {
 	Client *firestore.Client
+}
+
+// Result has date, weight, and distance.
+// Data are obtained from db.
+type Result struct {
+	Date     time.Time `json:"date"`
+	Weight   float64   `json:"weight"`
+	Distance float64   `json:"distance"`
 }
 
 // NewDatabase init Database.
@@ -76,7 +86,7 @@ func getCredentialPathFromS3() (string, error) {
 // AddUser add user information to firestore.
 func (db *Database) AddUser(userID string, weight, distance float64) error {
 	ctx := context.Background()
-	_, _, err := db.Client.Collection("users").Doc(userID).Collection("data").Add(ctx, map[string]interface{}{
+	_, _, err := db.Client.Collection("users").Doc(userID).Collection("load").Add(ctx, map[string]interface{}{
 		"date":     time.Now(),
 		"weight":   weight,
 		"distance": distance,
@@ -85,4 +95,43 @@ func (db *Database) AddUser(userID string, weight, distance float64) error {
 		return err
 	}
 	return nil
+}
+
+// GetDataByUserID execute searching weight and distance data by using userID.
+func (db *Database) GetDataByUserID(userID string) ([]Result, error) {
+	ctx := context.Background()
+	iter := db.Client.Collection("users").Doc(userID).Collection("load").Where("date", "<", time.Now()).OrderBy("date", firestore.Asc).Documents(ctx)
+	var results []Result
+	for {
+		doc, err := iter.Next()
+		if err == iterator.Done {
+			break
+		}
+		if err != nil {
+			return nil, err
+		}
+		data := doc.Data()
+		result := Result{}
+		result.assertion(data)
+		results = append(results, result)
+	}
+	return results, nil
+}
+
+func (r *Result) assertion(data map[string]interface{}) (Result, error) {
+	if date, ok := data["date"].(time.Time); ok {
+		r.Date = date
+	}
+	if r.Date.IsZero() {
+		return Result{}, errors.New("failed to assertion")
+	}
+
+	if weight, ok := data["weight"].(float64); ok {
+		r.Weight = weight
+	}
+	if distance, ok := data["distance"].(float64); ok {
+		r.Distance = distance
+	}
+
+	return *r, nil
 }
