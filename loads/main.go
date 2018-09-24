@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"net/http"
+	"os"
 	"time"
 
 	"github.com/aws/aws-lambda-go/events"
@@ -18,16 +19,16 @@ type Response struct {
 	Message string `json:"message"`
 }
 
-// Recieve is LINE request.
+// Receive is LINE request.
 // 一時的にこの形
 // TODO: 本当のリクエストの形に合わせて宣言
-type Recieve struct {
+type Receive struct {
 	UserID   string  `json:"user_id"`
 	Weight   float64 `json:"weight"`
 	Distance float64 `json:"distance"`
 	Date     string  `json:"date"`
-	Start_at string  `json:"start_at"`
-	End_at   string  `json:"end_at"`
+	StartAt  string  `json:"start_at"`
+	EndAt    string  `json:"end_at"`
 }
 
 type handler struct {
@@ -46,11 +47,10 @@ func (h *handler) ServeHTTP(request events.APIGatewayProxyRequest) (events.APIGa
 		zap.Float64("weight", rec.Weight),
 		zap.Float64("distance", rec.Distance),
 		zap.Time("date", parseTimeStr(rec.Date)),
-		zap.Time("start_at", parseTimeStr(rec.Start_at)),
-		zap.Time("end_at", parseTimeStr(rec.End_at)),
+		zap.Time("start_at", parseTimeStr(rec.StartAt)),
+		zap.Time("end_at", parseTimeStr(rec.EndAt)),
 	)
-
-	db, err := client.NewDatabase()
+	db, err := dbInit(os.Getenv("APP_ENV"))
 	if err != nil {
 		res := Response{Message: err.Error()}
 		return events.APIGatewayProxyResponse{Body: res.Message, StatusCode: http.StatusInternalServerError}, nil
@@ -59,7 +59,7 @@ func (h *handler) ServeHTTP(request events.APIGatewayProxyRequest) (events.APIGa
 		res := Response{Message: err.Error()}
 		return events.APIGatewayProxyResponse{Body: res.Message, StatusCode: http.StatusInternalServerError}, nil
 	}
-	results, err := db.GetDataByUserID(rec.UserID, parseTimeStr(rec.Start_at), parseTimeStr(rec.End_at))
+	results, err := db.GetDataByUserID(rec.UserID, parseTimeStr(rec.StartAt), parseTimeStr(rec.EndAt))
 	if err != nil {
 		res := Response{Message: err.Error()}
 		return events.APIGatewayProxyResponse{Body: res.Message, StatusCode: http.StatusInternalServerError}, nil
@@ -73,11 +73,11 @@ func (h *handler) ServeHTTP(request events.APIGatewayProxyRequest) (events.APIGa
 	return events.APIGatewayProxyResponse{Body: res.Message, StatusCode: http.StatusOK}, nil
 }
 
-func parseRequest(request events.APIGatewayProxyRequest) (Recieve, error) {
+func parseRequest(request events.APIGatewayProxyRequest) (Receive, error) {
 	buf := bytes.NewBufferString(request.Body)
-	rec := Recieve{}
+	rec := Receive{}
 	if err := json.NewDecoder(buf).Decode(&rec); err != nil {
-		return Recieve{}, err
+		return Receive{}, err
 	}
 	return rec, nil
 }
@@ -85,6 +85,18 @@ func parseRequest(request events.APIGatewayProxyRequest) (Recieve, error) {
 func parseTimeStr(timeStr string) time.Time {
 	t, _ := time.Parse("2006-01-02 15:04:05", timeStr)
 	return t
+}
+
+func dbInit(appEnv string) (*client.Database, error) {
+	credentialPath := "./credential.json"
+	if appEnv != "local" {
+		credentialPath = "/tmp/credential.json"
+		s3 := client.NewS3(os.Getenv("REGION"), os.Getenv("BUCKET"), os.Getenv("KEY"))
+		if err := s3.Download(credentialPath); err != nil {
+			return nil, err
+		}
+	}
+	return client.NewDatabase(credentialPath)
 }
 
 func encodeResults(results []client.Load) (string, error) {
