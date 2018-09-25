@@ -9,6 +9,7 @@ import (
 	"google.golang.org/api/iterator"
 )
 
+// Database is the interface that wraps methods for operating db
 type Database interface {
 	AddLoad(userID string, weight, distance float64, date time.Time) error
 	GetDataByUserID(userID string, start time.Time, end time.Time) ([]Load, error)
@@ -19,6 +20,7 @@ type firebase struct {
 	fsClient *firestore.Client
 }
 
+// NewFirebase init firebase
 func NewFirebase(client *firestore.Client) Database {
 	return &firebase{
 		fsClient: client,

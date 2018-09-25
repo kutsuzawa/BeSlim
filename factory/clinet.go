@@ -9,6 +9,7 @@ import (
 	"google.golang.org/api/option"
 )
 
+// ClientFactory is the interface that wraps methods for operating factory of client
 type ClientFactory interface {
 	Database(config *ClientFactoryConfig) (client.Database, error)
 	Storage(config *ClientFactoryConfig) client.Storage
@@ -18,12 +19,14 @@ type clientFactory struct {
 	env string
 }
 
+// NewClientFactory init clientFactory
 func NewClientFactory(env string) ClientFactory {
 	return &clientFactory{
 		env: env,
 	}
 }
 
+// ClientFactoryConfig is the config for initializing client
 type ClientFactoryConfig struct {
 	S3Region string
 	S3Bucket string
@@ -54,6 +57,6 @@ func (f *clientFactory) Database(config *ClientFactoryConfig) (client.Database, 
 }
 
 // Storage init Storage interface
-func (*clientFactory) Storage(config *ClientFactoryConfig) client.Storage {
+func (f *clientFactory) Storage(config *ClientFactoryConfig) client.Storage {
 	return client.NewS3(aws.String(config.S3Region), aws.String(config.S3Bucket), aws.String(config.S3Key))
 }
