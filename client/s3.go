@@ -9,26 +9,28 @@ import (
 	"github.com/aws/aws-sdk-go/service/s3/s3manager"
 )
 
-// S3 has information for connection AWS S3
-type S3 struct {
-	Region *string
-	Bucket *string
-	Key    *string
+type Storage interface {
+	Download(lambdaPath string) error
 }
 
-// NewS3 init S3
-func NewS3(region, bucket, key string) *S3 {
-	s3 := &S3{
-		Region: aws.String(region),
-		Bucket: aws.String(bucket),
-		Key:    aws.String(key),
+// s3 has information for connection AWS s3
+type s3 struct {
+	region *string
+	bucket *string
+	key    *string
+}
+
+func NewS3(region, bucket, key *string) Storage {
+	return &s3{
+		region: region,
+		bucket: bucket,
+		key:    key,
 	}
-	return s3
 }
 
-// Download execute download file on S3 to lambda.
-func (s3 *S3) Download(lambdaPath string) error {
-	sess, err := session.NewSession(&aws.Config{Region: s3.Region})
+// Download execute download file on s3 to lambda.
+func (s3 *s3) Download(lambdaPath string) error {
+	sess, err := session.NewSession(&aws.Config{Region: s3.region})
 	if err != nil {
 		return err
 	}
@@ -39,8 +41,8 @@ func (s3 *S3) Download(lambdaPath string) error {
 	}
 	defer file.Close()
 	if _, err := downloader.Download(file, &s3lib.GetObjectInput{
-		Bucket: s3.Bucket,
-		Key:    s3.Key,
+		Bucket: s3.bucket,
+		Key:    s3.key,
 	}); err != nil {
 		return err
 	}

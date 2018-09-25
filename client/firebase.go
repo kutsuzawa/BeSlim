@@ -6,14 +6,23 @@ import (
 	"time"
 
 	"cloud.google.com/go/firestore"
-	firebase "firebase.google.com/go"
 	"google.golang.org/api/iterator"
-	"google.golang.org/api/option"
 )
 
-// Firebase has firebase client.
-type Firebase struct {
-	Client *firestore.Client
+type Database interface {
+	AddLoad(userID string, weight, distance float64, date time.Time) error
+	GetDataByUserID(userID string, start time.Time, end time.Time) ([]Load, error)
+}
+
+// firebase has fb fsClient.
+type firebase struct {
+	fsClient *firestore.Client
+}
+
+func NewFirebase(client *firestore.Client) Database {
+	return &firebase{
+		fsClient: client,
+	}
 }
 
 // Load has date, weight, and distance.
@@ -24,32 +33,15 @@ type Load struct {
 	Distance float64   `json:"distance" firestore:"distance"`
 }
 
-// NewFirebase init Firebase.
-// We get credential.json for firebase from S3, then, we connect firestore.
-// Finally, Firebase structure obtain *firestore.Client
-func NewFirebase(credentialPath string) (*Firebase, error) {
-	ctx := context.Background()
-	opt := option.WithCredentialsFile(credentialPath)
-	app, err := firebase.NewApp(context.Background(), nil, opt)
-	if err != nil {
-		return nil, err
-	}
-	client, err := app.Firestore(ctx)
-	if err != nil {
-		return nil, err
-	}
-	return &Firebase{Client: client}, nil
-}
-
 // AddLoad add data every user information to firestore.
-func (db *Firebase) AddLoad(userID string, weight, distance float64, date time.Time) error {
+func (db *firebase) AddLoad(userID string, weight, distance float64, date time.Time) error {
 	ctx := context.Background()
 	load := Load{
 		Date:     date,
 		Weight:   weight,
 		Distance: distance,
 	}
-	_, _, err := db.Client.Collection("users").Doc(userID).Collection("load").Add(ctx, load)
+	_, _, err := db.fsClient.Collection("users").Doc(userID).Collection("load").Add(ctx, load)
 	if err != nil {
 		return err
 	}
@@ -57,9 +49,9 @@ func (db *Firebase) AddLoad(userID string, weight, distance float64, date time.T
 }
 
 // GetDataByUserID execute searching weight and distance data by using userID.
-func (db *Firebase) GetDataByUserID(userID string, start time.Time, end time.Time) ([]Load, error) {
+func (db *firebase) GetDataByUserID(userID string, start time.Time, end time.Time) ([]Load, error) {
 	ctx := context.Background()
-	iter := db.Client.Collection("users").Doc(userID).Collection("load").Where("date", ">", start).Where("date", "<", end).OrderBy("date", firestore.Asc).Documents(ctx)
+	iter := db.fsClient.Collection("users").Doc(userID).Collection("load").Where("date", ">", start).Where("date", "<", end).OrderBy("date", firestore.Asc).Documents(ctx)
 	var results []Load
 	for {
 		doc, err := iter.Next()

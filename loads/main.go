@@ -10,6 +10,7 @@ import (
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-lambda-go/lambda"
 	"github.com/kutsuzawa/slim-load-recorder/client"
+	"github.com/kutsuzawa/slim-load-recorder/factory"
 	"go.uber.org/zap"
 )
 
@@ -32,7 +33,9 @@ type Receive struct {
 }
 
 type handler struct {
-	logger *zap.Logger
+	logger  *zap.Logger
+	factory factory.ClientFactory
+	config  *factory.ClientFactoryConfig
 }
 
 func (h *handler) ServeHTTP(request events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
@@ -50,7 +53,7 @@ func (h *handler) ServeHTTP(request events.APIGatewayProxyRequest) (events.APIGa
 		zap.Time("start_at", parseTimeStr(rec.StartAt)),
 		zap.Time("end_at", parseTimeStr(rec.EndAt)),
 	)
-	db, err := dbInit(os.Getenv("APP_ENV"))
+	db, err := h.factory.Database(h.config)
 	if err != nil {
 		res := Response{Message: err.Error()}
 		return events.APIGatewayProxyResponse{Body: res.Message, StatusCode: http.StatusInternalServerError}, nil
@@ -87,18 +90,6 @@ func parseTimeStr(timeStr string) time.Time {
 	return t
 }
 
-func dbInit(appEnv string) (*client.Firebase, error) {
-	credentialPath := "./credential.json"
-	if appEnv != "local" {
-		credentialPath = "/tmp/credential.json"
-		s3 := client.NewS3(os.Getenv("REGION"), os.Getenv("BUCKET"), os.Getenv("KEY"))
-		if err := s3.Download(credentialPath); err != nil {
-			return nil, err
-		}
-	}
-	return client.NewFirebase(credentialPath)
-}
-
 func encodeResults(results []client.Load) (string, error) {
 	buf := new(bytes.Buffer)
 	if err := json.NewEncoder(buf).Encode(results); err != nil {
@@ -110,6 +101,15 @@ func encodeResults(results []client.Load) (string, error) {
 func main() {
 	logger, _ := zap.NewProduction()
 	defer logger.Sync()
-	handler := handler{logger}
+	config := &factory.ClientFactoryConfig{
+		S3Region: os.Getenv("REGION"),
+		S3Bucket: os.Getenv("BUCKET"),
+		S3Key:    os.Getenv("KEY"),
+	}
+	handler := handler{
+		logger:  logger,
+		factory: factory.NewClientFactory(os.Getenv("APP_ENV")),
+		config:  config,
+	}
 	lambda.Start(handler.ServeHTTP)
 }
