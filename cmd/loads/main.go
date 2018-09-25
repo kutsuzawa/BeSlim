@@ -9,8 +9,8 @@ import (
 
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-lambda-go/lambda"
-	"github.com/kutsuzawa/slim-load-recorder/client"
-	"github.com/kutsuzawa/slim-load-recorder/factory"
+	"github.com/kutsuzawa/slim-load-recorder/application"
+	"github.com/kutsuzawa/slim-load-recorder/interface_adaptor"
 	"go.uber.org/zap"
 )
 
@@ -34,8 +34,8 @@ type Receive struct {
 
 type handler struct {
 	logger  *zap.Logger
-	factory factory.ClientFactory
-	config  *factory.ClientFactoryConfig
+	factory interface_adaptor.Factory
+	config  *interface_adaptor.ClientFactoryConfig
 }
 
 func (h *handler) ServeHTTP(request events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
@@ -90,7 +90,7 @@ func parseTimeStr(timeStr string) time.Time {
 	return t
 }
 
-func encodeResults(results []client.Load) (string, error) {
+func encodeResults(results []application.Load) (string, error) {
 	buf := new(bytes.Buffer)
 	if err := json.NewEncoder(buf).Encode(results); err != nil {
 		return "", err
@@ -101,14 +101,14 @@ func encodeResults(results []client.Load) (string, error) {
 func main() {
 	logger, _ := zap.NewProduction()
 	defer logger.Sync()
-	config := &factory.ClientFactoryConfig{
+	config := &interface_adaptor.ClientFactoryConfig{
 		S3Region: os.Getenv("REGION"),
 		S3Bucket: os.Getenv("BUCKET"),
 		S3Key:    os.Getenv("KEY"),
 	}
 	handler := handler{
 		logger:  logger,
-		factory: factory.NewClientFactory(os.Getenv("APP_ENV")),
+		factory: interface_adaptor.NewClientFactory(os.Getenv("APP_ENV")),
 		config:  config,
 	}
 	lambda.Start(handler.ServeHTTP)

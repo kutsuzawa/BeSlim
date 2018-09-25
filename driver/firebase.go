@@ -1,18 +1,17 @@
-package client
+package driver
 
 import (
 	"context"
-	"errors"
 	"time"
 
 	"cloud.google.com/go/firestore"
+	"github.com/kutsuzawa/slim-load-recorder/application"
 	"google.golang.org/api/iterator"
 )
 
-// Database is the interface that wraps methods for operating db
-type Database interface {
+type FireBase interface {
 	AddLoad(userID string, weight, distance float64, date time.Time) error
-	GetDataByUserID(userID string, start time.Time, end time.Time) ([]Load, error)
+	GetDataByUserID(userID string, start time.Time, end time.Time) ([]application.Load, error)
 }
 
 // firebase has fb fsClient.
@@ -21,24 +20,16 @@ type firebase struct {
 }
 
 // NewFirebase init firebase
-func NewFirebase(client *firestore.Client) Database {
+func NewFirebase(client *firestore.Client) FireBase {
 	return &firebase{
 		fsClient: client,
 	}
 }
 
-// Load has date, weight, and distance.
-// Data are obtained from db.
-type Load struct {
-	Date     time.Time `json:"date" firestore:"date"`
-	Weight   float64   `json:"weight" firestore:"weight"`
-	Distance float64   `json:"distance" firestore:"distance"`
-}
-
 // AddLoad add data every user information to firestore.
 func (db *firebase) AddLoad(userID string, weight, distance float64, date time.Time) error {
 	ctx := context.Background()
-	load := Load{
+	load := application.Load{
 		Date:     date,
 		Weight:   weight,
 		Distance: distance,
@@ -51,10 +42,10 @@ func (db *firebase) AddLoad(userID string, weight, distance float64, date time.T
 }
 
 // GetDataByUserID execute searching weight and distance data by using userID.
-func (db *firebase) GetDataByUserID(userID string, start time.Time, end time.Time) ([]Load, error) {
+func (db *firebase) GetDataByUserID(userID string, start time.Time, end time.Time) ([]application.Load, error) {
 	ctx := context.Background()
 	iter := db.fsClient.Collection("users").Doc(userID).Collection("load").Where("date", ">", start).Where("date", "<", end).OrderBy("date", firestore.Asc).Documents(ctx)
-	var results []Load
+	var results []application.Load
 	for {
 		doc, err := iter.Next()
 		if err == iterator.Done {
@@ -64,27 +55,9 @@ func (db *firebase) GetDataByUserID(userID string, start time.Time, end time.Tim
 			return nil, err
 		}
 		data := doc.Data()
-		result := Load{}
-		result.assertion(data)
+		result := application.Load{}
+		result.Assertion(data)
 		results = append(results, result)
 	}
 	return results, nil
-}
-
-func (l *Load) assertion(data map[string]interface{}) (Load, error) {
-	if date, ok := data["date"].(time.Time); ok {
-		l.Date = date
-	}
-	if l.Date.IsZero() {
-		return Load{}, errors.New("failed to assert")
-	}
-
-	if weight, ok := data["weight"].(float64); ok {
-		l.Weight = weight
-	}
-	if distance, ok := data["distance"].(float64); ok {
-		l.Distance = distance
-	}
-
-	return *l, nil
 }

@@ -1,27 +1,27 @@
-package factory
+package interface_adaptor
 
 import (
 	"context"
 
 	fb "firebase.google.com/go"
 	"github.com/aws/aws-sdk-go/aws"
-	"github.com/kutsuzawa/slim-load-recorder/client"
+	"github.com/kutsuzawa/slim-load-recorder/driver"
 	"google.golang.org/api/option"
 )
 
-// ClientFactory is the interface that wraps methods for operating factory of client
-type ClientFactory interface {
-	Database(config *ClientFactoryConfig) (client.Database, error)
-	Storage(config *ClientFactoryConfig) client.Storage
+// Factory is the interface that wraps methods for operating factory of client
+type Factory interface {
+	Database(config *ClientFactoryConfig) (Database, error)
+	Storage(config *ClientFactoryConfig) Storage
 }
 
-type clientFactory struct {
+type factory struct {
 	env string
 }
 
-// NewClientFactory init clientFactory
-func NewClientFactory(env string) ClientFactory {
-	return &clientFactory{
+// NewClientFactory init factory
+func NewClientFactory(env string) Factory {
+	return &factory{
 		env: env,
 	}
 }
@@ -34,7 +34,7 @@ type ClientFactoryConfig struct {
 }
 
 // Database init Database interface
-func (f *clientFactory) Database(config *ClientFactoryConfig) (client.Database, error) {
+func (f *factory) Database(config *ClientFactoryConfig) (Database, error) {
 	credentialPath := "./credential.json"
 	if f.env != "local" {
 		credentialPath = "/tmp/credential.json"
@@ -53,10 +53,10 @@ func (f *clientFactory) Database(config *ClientFactoryConfig) (client.Database, 
 	if err != nil {
 		return nil, err
 	}
-	return client.NewFirebase(fbClient), nil
+	return driver.NewFirebase(fbClient), nil
 }
 
 // Storage init Storage interface
-func (f *clientFactory) Storage(config *ClientFactoryConfig) client.Storage {
-	return client.NewS3(aws.String(config.S3Region), aws.String(config.S3Bucket), aws.String(config.S3Key))
+func (f *factory) Storage(config *ClientFactoryConfig) Storage {
+	return driver.NewS3(aws.String(config.S3Region), aws.String(config.S3Bucket), aws.String(config.S3Key))
 }

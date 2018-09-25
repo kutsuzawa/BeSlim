@@ -1,4 +1,4 @@
-package client
+package driver
 
 import (
 	"os"
@@ -9,8 +9,7 @@ import (
 	"github.com/aws/aws-sdk-go/service/s3/s3manager"
 )
 
-// Storage is the interface that wraps methods for operating storage
-type Storage interface {
+type S3 interface {
 	Download(lambdaPath string) error
 }
 
@@ -22,7 +21,7 @@ type s3 struct {
 }
 
 // NewS3 init s3
-func NewS3(region, bucket, key *string) Storage {
+func NewS3(region, bucket, key *string) S3 {
 	return &s3{
 		region: region,
 		bucket: bucket,
