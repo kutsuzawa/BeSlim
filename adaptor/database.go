@@ -1,4 +1,4 @@
-package interface_adaptor
+package adaptor
 
 import "github.com/kutsuzawa/slim-load-recorder/driver"
 

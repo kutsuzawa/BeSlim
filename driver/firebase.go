@@ -9,6 +9,7 @@ import (
 	"google.golang.org/api/iterator"
 )
 
+// FireBase is the interface wrap methods for operating firebase
 type FireBase interface {
 	AddLoad(userID string, weight, distance float64, date time.Time) error
 	GetDataByUserID(userID string, start time.Time, end time.Time) ([]application.Load, error)

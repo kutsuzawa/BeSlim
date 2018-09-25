@@ -9,8 +9,8 @@ import (
 
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-lambda-go/lambda"
+	"github.com/kutsuzawa/slim-load-recorder/adaptor"
 	"github.com/kutsuzawa/slim-load-recorder/application"
-	"github.com/kutsuzawa/slim-load-recorder/interface_adaptor"
 	"go.uber.org/zap"
 )
 
@@ -34,8 +34,8 @@ type Receive struct {
 
 type handler struct {
 	logger  *zap.Logger
-	factory interface_adaptor.Factory
-	config  *interface_adaptor.ClientFactoryConfig
+	factory adaptor.Factory
+	config  *adaptor.ClientFactoryConfig
 }
 
 func (h *handler) ServeHTTP(request events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
@@ -101,14 +101,14 @@ func encodeResults(results []application.Load) (string, error) {
 func main() {
 	logger, _ := zap.NewProduction()
 	defer logger.Sync()
-	config := &interface_adaptor.ClientFactoryConfig{
+	config := &adaptor.ClientFactoryConfig{
 		S3Region: os.Getenv("REGION"),
 		S3Bucket: os.Getenv("BUCKET"),
 		S3Key:    os.Getenv("KEY"),
 	}
 	handler := handler{
 		logger:  logger,
-		factory: interface_adaptor.NewClientFactory(os.Getenv("APP_ENV")),
+		factory: adaptor.NewClientFactory(os.Getenv("APP_ENV")),
 		config:  config,
 	}
 	lambda.Start(handler.ServeHTTP)

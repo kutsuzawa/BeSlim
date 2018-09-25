@@ -9,6 +9,7 @@ import (
 	"github.com/aws/aws-sdk-go/service/s3/s3manager"
 )
 
+// S3 is the interface wrap methods for operating s3
 type S3 interface {
 	Download(lambdaPath string) error
 }

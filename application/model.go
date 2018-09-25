@@ -14,6 +14,7 @@ type Load struct {
 	Distance float64   `json:"distance" firestore:"distance"`
 }
 
+// Assertion asserts data
 func (l *Load) Assertion(data map[string]interface{}) (Load, error) {
 	if date, ok := data["date"].(time.Time); ok {
 		l.Date = date
