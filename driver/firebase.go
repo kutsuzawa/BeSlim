@@ -5,48 +5,56 @@ import (
 	"time"
 
 	"cloud.google.com/go/firestore"
-	"github.com/kutsuzawa/slim-load-recorder/application"
+	firebase "firebase.google.com/go"
+	"github.com/kutsuzawa/slim-load-recorder/entity"
 	"google.golang.org/api/iterator"
+	"google.golang.org/api/option"
 )
 
-// FireBase is the interface wrap methods for operating firebase
-type FireBase interface {
-	AddLoad(userID string, weight, distance float64, date time.Time) error
-	GetDataByUserID(userID string, start time.Time, end time.Time) ([]application.Load, error)
+// Firebase has client for connecting firebase
+type Firebase struct {
+	Client *firestore.Client
 }
 
-// firebase has fb fsClient.
-type firebase struct {
-	fsClient *firestore.Client
-}
-
-// NewFirebase init firebase
-func NewFirebase(client *firestore.Client) FireBase {
-	return &firebase{
-		fsClient: client,
+// NewFirebase init Firebase struct
+func NewFirebase(env, region, bucket, key string) (*Firebase, error) {
+	fb := &Firebase{}
+	s3 := NewS3(&region, &bucket, &key)
+	credentialPath := "./credential.json"
+	if env != "local" {
+		credentialPath = "/tmp/credential.json"
+		if err := s3.Download(credentialPath); err != nil {
+			return nil, err
+		}
 	}
-}
 
-// AddLoad add data every user information to firestore.
-func (db *firebase) AddLoad(userID string, weight, distance float64, date time.Time) error {
 	ctx := context.Background()
-	load := application.Load{
-		Date:     date,
-		Weight:   weight,
-		Distance: distance,
+	opt := option.WithCredentialsFile(credentialPath)
+	app, err := firebase.NewApp(context.Background(), nil, opt)
+	if err != nil {
+		return nil, err
 	}
-	_, _, err := db.fsClient.Collection("users").Doc(userID).Collection("load").Add(ctx, load)
+	fb.Client, err = app.Firestore(ctx)
+	return fb, nil
+}
+
+// Add is implementation of DatabaseDriver in adapter package.
+// It add Load every user to Firebase.
+func (db *Firebase) Add(userID string, load entity.Load) error {
+	ctx := context.Background()
+	_, _, err := db.Client.Collection("users").Doc(userID).Collection("load").Add(ctx, load)
 	if err != nil {
 		return err
 	}
 	return nil
 }
 
-// GetDataByUserID execute searching weight and distance data by using userID.
-func (db *firebase) GetDataByUserID(userID string, start time.Time, end time.Time) ([]application.Load, error) {
+// Search is implementation of DatabaseDriver in adapter package.
+// It search Loads that satisfy desired duration from Firebase.
+func (db *Firebase) Search(userID string, start, end time.Time) ([]entity.Load, error) {
 	ctx := context.Background()
-	iter := db.fsClient.Collection("users").Doc(userID).Collection("load").Where("date", ">", start).Where("date", "<", end).OrderBy("date", firestore.Asc).Documents(ctx)
-	var results []application.Load
+	iter := db.Client.Collection("users").Doc(userID).Collection("load").Where("date", ">", start).Where("date", "<", end).OrderBy("date", firestore.Asc).Documents(ctx)
+	var results []entity.Load
 	for {
 		doc, err := iter.Next()
 		if err == iterator.Done {
@@ -56,9 +64,11 @@ func (db *firebase) GetDataByUserID(userID string, start time.Time, end time.Tim
 			return nil, err
 		}
 		data := doc.Data()
-		result := application.Load{}
+		result := entity.Load{}
+		// TODO: AssertionはAdapterレイヤーでやる気がする.
 		result.Assertion(data)
 		results = append(results, result)
 	}
 	return results, nil
+
 }
