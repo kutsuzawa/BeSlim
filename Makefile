@@ -4,7 +4,7 @@ setup:
 
 .PHONY: build
 build:
-	env GOOS=linux go build -o bin/loads loads/main.go
+	env GOOS=linux go build -o bin/loads cmd/loads/main.go
 
 .PHONY: lambda
 lambda:
