@@ -1,4 +1,4 @@
-package driver
+package handler
 
 import (
 	"bytes"
@@ -8,7 +8,7 @@ import (
 
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/kutsuzawa/slim-load-recorder/entity"
-	"github.com/kutsuzawa/slim-load-recorder/usecase"
+	"github.com/kutsuzawa/slim-load-recorder/interactor"
 	"go.uber.org/zap"
 )
 
@@ -33,7 +33,7 @@ type Receive struct {
 // Handle has logger
 type Handle struct {
 	Logger  *zap.Logger
-	Usecase *usecase.LoadInteractor
+	Usecase *interactor.Interactor
 }
 
 func parseRequest(request events.APIGatewayProxyRequest) (Receive, error) {
@@ -78,7 +78,7 @@ func (h *Handle) ServeHTTP(request events.APIGatewayProxyRequest) (events.APIGat
 		Weight:   rec.Weight,
 		Distance: rec.Distance,
 	}
-	results, err := h.Usecase.PostAndGetLoads(rec.UserID, load, parseTimeStr(rec.StartAt), parseTimeStr(rec.EndAt))
+	results, err := h.Usecase.LoadGenerate(rec.UserID, load, parseTimeStr(rec.StartAt), parseTimeStr(rec.EndAt))
 	if err != nil {
 		res := Response{Message: err.Error()}
 		return events.APIGatewayProxyResponse{Body: res.Message, StatusCode: http.StatusInternalServerError}, nil

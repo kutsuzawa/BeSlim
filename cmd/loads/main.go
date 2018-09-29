@@ -5,27 +5,28 @@ import (
 	"os"
 
 	"github.com/aws/aws-lambda-go/lambda"
-	"github.com/kutsuzawa/slim-load-recorder/adapter"
-	"github.com/kutsuzawa/slim-load-recorder/driver"
-	"github.com/kutsuzawa/slim-load-recorder/usecase"
+	"github.com/kutsuzawa/slim-load-recorder/adapter/repository"
+	"github.com/kutsuzawa/slim-load-recorder/driver/firebase"
+	"github.com/kutsuzawa/slim-load-recorder/driver/handler"
+	"github.com/kutsuzawa/slim-load-recorder/interactor"
 	"go.uber.org/zap"
 )
 
 func main() {
 	logger, _ := zap.NewProduction()
 	defer logger.Sync()
-	db, err := driver.NewFirebase(os.Getenv("APP_ENV"), os.Getenv("REGION"), os.Getenv("BUCKET"), os.Getenv("KEY"))
+	db, err := firebase.NewFirebase(os.Getenv("APP_ENV"), os.Getenv("REGION"), os.Getenv("BUCKET"), os.Getenv("KEY"))
 	if err != nil {
 		log.Fatal(err)
 	}
-	repository := &adapter.Adapt{
-		DatabaseDriver: db,
+	repository := &repository.Repository{
+		Driver: db,
 	}
-	usecase := &usecase.LoadInteractor{
-		Adapter: repository,
+	usecase := &interactor.Interactor{
+		Repository: repository,
 	}
 
-	handler := &driver.Handle{
+	handler := &handler.Handle{
 		Logger:  logger,
 		Usecase: usecase,
 	}
