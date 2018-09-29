@@ -5,9 +5,9 @@ import (
 	"os"
 
 	"github.com/aws/aws-lambda-go/lambda"
-	"github.com/kutsuzawa/slim-load-recorder/adapter/repository"
-	"github.com/kutsuzawa/slim-load-recorder/driver/firebase"
-	"github.com/kutsuzawa/slim-load-recorder/driver/handler"
+	"github.com/kutsuzawa/slim-load-recorder/boundary/repository"
+	"github.com/kutsuzawa/slim-load-recorder/infrastructure/firebase"
+	"github.com/kutsuzawa/slim-load-recorder/infrastructure/handler"
 	"github.com/kutsuzawa/slim-load-recorder/interactor"
 	"go.uber.org/zap"
 )
