@@ -19,16 +19,16 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	repository := &repository.Repository{
+	repo := &repository.Repository{
 		Driver: db,
 	}
 	usecase := &interactor.Interactor{
-		Repository: repository,
+		Repository: repo,
 	}
 
-	handler := &handler.Handle{
+	h := &handler.Handle{
 		Logger:  logger,
 		Usecase: usecase,
 	}
-	lambda.Start(handler.ServeHTTP)
+	lambda.Start(h.ServeHTTP)
 }
