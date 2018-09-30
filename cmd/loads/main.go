@@ -4,10 +4,12 @@ import (
 	"log"
 	"os"
 
-	"github.com/aws/aws-lambda-go/lambda"
+	"github.com/kutsuzawa/slim-load-recorder/boundary/controller"
+	"github.com/kutsuzawa/slim-load-recorder/boundary/presenter"
 	"github.com/kutsuzawa/slim-load-recorder/boundary/repository"
+	"github.com/kutsuzawa/slim-load-recorder/infrastructure/console"
 	"github.com/kutsuzawa/slim-load-recorder/infrastructure/firebase"
-	"github.com/kutsuzawa/slim-load-recorder/infrastructure/handler"
+	"github.com/kutsuzawa/slim-load-recorder/infrastructure/lambda"
 	"github.com/kutsuzawa/slim-load-recorder/interactor"
 	"go.uber.org/zap"
 )
@@ -22,13 +24,11 @@ func main() {
 	repo := &repository.Repository{
 		Driver: db,
 	}
-	usecase := &interactor.Interactor{
-		Repository: repo,
-	}
 
-	h := &handler.Handle{
-		Logger:  logger,
-		Usecase: usecase,
-	}
-	lambda.Start(h.ServeHTTP)
+	viewer := console.NewConsoleView(os.Stdout, os.Stdin)
+	responder := presenter.NewConsolePresenter(viewer)
+	requester := interactor.NewAddLoadFromLine(responder, repo, logger)
+	ctl := controller.NewSlimLoadController(requester)
+	receiver := lambda.NewLambda(ctl)
+	receiver.Receive()
 }

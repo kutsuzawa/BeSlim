@@ -52,3 +52,7 @@
 [prune]
   go-tests = true
   unused-packages = true
+
+[[constraint]]
+  name = "github.com/line/line-bot-sdk-go"
+  version = "4.0.0"
