@@ -65,14 +65,16 @@ func (h *Handle) ServeHTTP(request events.APIGatewayProxyRequest) (events.APIGat
 		res := Response{Message: err.Error()}
 		return events.APIGatewayProxyResponse{Body: res.Message, StatusCode: http.StatusInternalServerError}, nil
 	}
-	h.Logger.Info("post data",
-		zap.String("user_id", rec.UserID),
-		zap.Float64("weight", rec.Weight),
-		zap.Float64("distance", rec.Distance),
-		zap.Time("date", parseTimeStr(rec.Date)),
-		zap.Time("start_at", parseTimeStr(rec.StartAt)),
-		zap.Time("end_at", parseTimeStr(rec.EndAt)),
-	)
+	/*
+		h.Logger.Info("post data",
+			zap.String("user_id", rec.UserID),
+			zap.Float64("weight", rec.Weight),
+			zap.Float64("distance", rec.Distance),
+			zap.Time("date", parseTimeStr(rec.Date)),
+			zap.Time("start_at", parseTimeStr(rec.StartAt)),
+			zap.Time("end_at", parseTimeStr(rec.EndAt)),
+		)
+	*/
 	load := entity.Load{
 		Date:     parseTimeStr(rec.Date),
 		Weight:   rec.Weight,

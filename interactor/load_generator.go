@@ -18,20 +18,51 @@ type DataAccessor interface {
 	GetLoadsByUserID(userID string, start, end time.Time) ([]entity.Load, error)
 }
 
-// Interactor has DataAccessor Interface
-type Interactor struct {
-	Repository DataAccessor
+type Receiver interface {
+	GetRequest() (Request, error)
 }
 
-// LoadGenerate add load data to db.
+type Request struct {
+	UserID   string    `json:"user_id"`
+	Weight   float64   `json:"weight"`
+	Distance float64   `json:"distance"`
+	Date     time.Time `json:"date"`
+	StartAt  time.Time `json:"start_at"`
+	EndAt    time.Time `json:"end_at"`
+}
+
+type Sender interface {
+	Post([]entity.Load) error
+}
+
+// GraphGeneration has DataAccessor Interface
+type GraphGeneration struct {
+	repository DataAccessor
+	receiver   Receiver
+	sender     Sender
+}
+
+// Run add load data to db.
 // Then, it get load data between start and end.
-func (interactor *Interactor) LoadGenerate(userID string, load entity.Load, start, end time.Time) ([]entity.Load, error) {
-	if err := interactor.Repository.AddLoad(userID, load); err != nil {
-		return nil, err
-	}
-	loads, err := interactor.Repository.GetLoadsByUserID(userID, start, end)
+func (gg *GraphGeneration) Run() error {
+	rec, err := gg.receiver.GetRequest()
 	if err != nil {
-		return nil, err
+		return err
 	}
-	return loads, nil
+	load := entity.Load{
+		Weight:   rec.Weight,
+		Distance: rec.Distance,
+		Date:     rec.Date,
+	}
+	if err := gg.repository.AddLoad(rec.UserID, load); err != nil {
+		return err
+	}
+	loads, err := gg.repository.GetLoadsByUserID(rec.UserID, rec.StartAt, rec.EndAt)
+	if err != nil {
+		return err
+	}
+	if err := gg.sender.Post(loads); err != nil {
+		return err
+	}
+	return nil
 }

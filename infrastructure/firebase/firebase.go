@@ -13,7 +13,7 @@ import (
 
 // Firebase has client for connecting firebase
 type Firebase struct {
-	Client *firestore.Client
+	client *firestore.Client
 }
 
 // NewFirebase init Firebase struct
@@ -34,7 +34,7 @@ func NewFirebase(env, region, bucket, key string) (*Firebase, error) {
 	if err != nil {
 		return nil, err
 	}
-	fb.Client, err = app.Firestore(ctx)
+	fb.client, err = app.Firestore(ctx)
 	return fb, nil
 }
 
@@ -42,7 +42,7 @@ func NewFirebase(env, region, bucket, key string) (*Firebase, error) {
 // It add Load every user to Firebase.
 func (db *Firebase) Add(userID string, load entity.Load) error {
 	ctx := context.Background()
-	_, _, err := db.Client.Collection("users").Doc(userID).Collection("load").Add(ctx, load)
+	_, _, err := db.client.Collection("users").Doc(userID).Collection("load").Add(ctx, load)
 	if err != nil {
 		return err
 	}
@@ -53,7 +53,7 @@ func (db *Firebase) Add(userID string, load entity.Load) error {
 // It search Loads that satisfy desired duration from Firebase.
 func (db *Firebase) Search(userID string, start, end time.Time) ([]entity.Load, error) {
 	ctx := context.Background()
-	iter := db.Client.Collection("users").Doc(userID).Collection("load").Where("date", ">", start).Where("date", "<", end).OrderBy("date", firestore.Asc).Documents(ctx)
+	iter := db.client.Collection("users").Doc(userID).Collection("load").Where("date", ">", start).Where("date", "<", end).OrderBy("date", firestore.Asc).Documents(ctx)
 	var results []entity.Load
 	for {
 		doc, err := iter.Next()

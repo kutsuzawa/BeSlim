@@ -14,12 +14,12 @@ type Driver interface {
 
 // Repository has a Driver interface
 type Repository struct {
-	Driver Driver
+	driver Driver
 }
 
 // AddLoad add load structure to db
 func (repo *Repository) AddLoad(userID string, load entity.Load) error {
-	if err := repo.Driver.Add(userID, load); err != nil {
+	if err := repo.driver.Add(userID, load); err != nil {
 		return err
 	}
 	return nil
@@ -27,7 +27,7 @@ func (repo *Repository) AddLoad(userID string, load entity.Load) error {
 
 // GetLoadsByUserID search load data.
 func (repo *Repository) GetLoadsByUserID(userID string, start, end time.Time) ([]entity.Load, error) {
-	loads, err := repo.Driver.Search(userID, start, end)
+	loads, err := repo.driver.Search(userID, start, end)
 	if err != nil {
 		return nil, err
 	}
