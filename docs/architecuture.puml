@@ -1,0 +1,81 @@
+@startuml
+package Interactor #f9d423{
+    interface DataBaseAccess
+    component LoadGenerator
+    component SlimLoadResponse<<DS>>#Green
+    component SlimLoadRequest<<DS>>#Green
+    interface SlimLoadRequester
+    interface SlimLoadResponder
+    interface DataBaseFactory #00dffc
+
+    LoadGenerator -> DataBaseAccess
+    LoadGenerator -up-> SlimLoadResponse
+    LoadGenerator -up-> SlimLoadRequest
+    LoadGenerator -up-> SlimLoadResponder
+    SlimLoadRequester <|-- LoadGenerator
+
+    package entity #ede574{
+        component Load
+    }
+    DataBaseAccess -> Load
+    DataBaseFactory ..> DataBaseAccess
+}
+
+package Controller　#fc913a{
+    component SlimLoadController
+    interface Receiver
+    Receiver <-left- SlimLoadController
+}
+
+package DataBase#fc913a{
+    component Repository
+    interface FireBaseAccess
+    component DataBaseFactoryImpl #2b90d9
+    interface FireBaseFactory #00dffc
+
+    Repository --> FireBaseAccess
+    DataBaseFactoryImpl -> Repository
+    FireBaseFactory ..> FireBaseAccess
+}
+
+package FireBase#ff4e50{
+    component FireBaseSDK
+    component FireBaseFactoryImpl #2b90d9
+    FireBaseFactoryImpl -> FireBaseSDK
+}
+
+package Presenter#fc913a{
+    component LambdaPresenter
+    component LambdaModel<<DS>>#Green
+    interface Responder
+
+    LambdaPresenter --> LambdaModel
+    Responder --> LambdaModel
+    LambdaPresenter --> Responder
+}
+
+package Lambda #ff4e50 {
+   component Handle
+
+}
+
+' Controller => Interactor
+SlimLoadController -down-> SlimLoadRequest
+SlimLoadController -down-> SlimLoadRequester
+
+' Presenter => Interactor
+LambdaPresenter -down-|> SlimLoadResponder
+LambdaPresenter -down-> SlimLoadResponse
+
+' DataBase => Interactor
+Repository -up-|> DataBaseAccess
+DataBaseFactoryImpl -up-> DataBaseFactory
+
+' Lambda => Presenter/Controller
+Handle -down-|> Receiver
+
+' FireBase => DataBase
+FireBaseSDK -up-|> FireBaseAccess
+FireBaseFactoryImpl -up-|> FireBaseFactory
+
+@enduml
