@@ -24,22 +24,22 @@ package Interactor #f9d423{
 package Controller　#fc913a{
     component SlimLoadController
     interface SlimLoadReceiver
+    interface SlimLoadPresenter
     interface ReceiverFactory #00dffc
 
     SlimLoadController -left-> SlimLoadReceiver
     ReceiverFactory ..> SlimLoadReceiver
+    SlimLoadController -> SlimLoadPresenter
 }
-SlimLoadController -down-> SlimLoadRequest
-SlimLoadController -right-> SlimLoadRequester
 
 package DataBase#fc913a{
     component Repository
     interface FireBaseAccess
-    component DatabaseFactoryImpl #2b90d9
+    component DataBaseFactoryImpl #2b90d9
     interface FireBaseFactory #00dffc
 
     Repository --> FireBaseAccess
-    DatabaseFactoryImpl -> Repository
+    DataBaseFactoryImpl -> Repository
     FireBaseFactory ..> FireBaseAccess
 }
 
@@ -49,47 +49,50 @@ package FireBase#ff4e50{
     FireBaseFactoryImpl -> FireBaseSDK
 }
 
-FireBaseSDK -up-|> FireBaseAccess
-
-package HttpReceiver#ff4e50{
-    component Receiver
-    component ReceiverFactoryImpl #2b90d9
-
-    ReceiverFactoryImpl -> Receiver
-}
-
 package Presenter#fc913a{
-    component LinePresenter
-    component LineModel<<DS>>#Green
-    interface LineViewer
+    component LambdaPresenter
+    component LambdaModel<<DS>>#Green
+    interface Responder
     interface ViewFactory #00dffc
 
-    LinePresenter --> LineModel
-    LineViewer --> LineModel
-    LinePresenter --> LineViewer
-    ViewFactory .> LineViewer
+    LambdaPresenter --> LambdaModel
+    Responder --> LambdaModel
+    LambdaPresenter --> Responder
+    ViewFactory .> Responder
 }
 
-package View#ff4e50{
-    Component LineView
-    component ViewFactoryImpl #2b90d9
+package Lambda #ff4e50 {
+   component Receiver
+   component ReceiverFactoryImpl #2b90d9
+   ReceiverFactoryImpl -> Receiver
+   Component responder
+   component ViewFactoryImpl #2b90d9
 
-    ViewFactoryImpl -> LineView
+   ViewFactoryImpl -> responder
 }
 
-node line#Red
-database firebase#Red
-FireBaseSDK -> firebase
-LineViewer <|-- LineView
-LineView --> line
-SlimLoadResponder <|-up- LinePresenter
-SlimLoadResponse <-- LinePresenter
-DataBaseAccess <|-down- Repository
-Receiver --|> SlimLoadReceiver
+' Controller => Interactor
+SlimLoadController -down-> SlimLoadRequest
+SlimLoadController -down-> SlimLoadRequester
 
-DataBaseFactory <|-- DatabaseFactoryImpl
-FireBaseFactory <|-- FireBaseFactoryImpl
-ViewFactory <|-- ViewFactoryImpl
-ReceiverFactoryImpl --|> ReceiverFactory
+' Presenter => Interactor
+LambdaPresenter -down-|> SlimLoadResponder
+LambdaPresenter -down-> SlimLoadResponse
 
+' DataBase => Interactor
+Repository -up-|> DataBaseAccess
+DataBaseFactoryImpl -up-> DataBaseFactory
+
+' Lambda => Presenter/Controller
+responder -down-|> Responder
+ViewFactoryImpl -down-> ViewFactory
+Receiver -down-|> SlimLoadReceiver
+ReceiverFactoryImpl -down-|> ReceiverFactory
+
+' FireBase => DataBase
+FireBaseSDK -up-|> FireBaseAccess
+FireBaseFactoryImpl -up-|> FireBaseFactory
+
+' Presenter => Controller
+LambdaPresenter -up-|> SlimLoadPresenter
 @enduml
