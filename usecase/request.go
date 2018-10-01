@@ -1,13 +1,8 @@
-package interactor
+package usecase
 
 import (
 	"time"
 )
-
-// SlimLoadRequester receives request
-type SlimLoadRequester interface {
-	Handle(request Request)
-}
 
 // Request is used to receive requests
 type Request struct {

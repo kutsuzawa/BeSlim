@@ -3,37 +3,43 @@ package controller
 import (
 	"bytes"
 
+	"encoding/json"
+	"net/http"
+
 	"github.com/aws/aws-lambda-go/events"
-	"github.com/gin-gonic/gin/json"
-	"github.com/kutsuzawa/slim-load-recorder/interactor"
+	"github.com/kutsuzawa/slim-load-recorder/usecase"
 )
 
-// SlimLoadController define method for parsing request
+// SlimLoadController define method
 type SlimLoadController interface {
-	ParseRequest(request events.APIGatewayProxyRequest)
-}
-
-// SlimLoadReceiver (DIP)
-type SlimLoadReceiver interface {
-	Receive()
+	Run(request events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error)
 }
 
 type slimLoadController struct {
-	interactor interactor.SlimLoadRequester
+	inputPort usecase.InputPort
 }
 
 // NewSlimLoadController init slimLoadController
-func NewSlimLoadController(interactor interactor.SlimLoadRequester) SlimLoadController {
+func NewSlimLoadController(inputPort usecase.InputPort) SlimLoadController {
 	return &slimLoadController{
-		interactor: interactor,
+		inputPort: inputPort,
 	}
 }
 
-func (sc *slimLoadController) ParseRequest(request events.APIGatewayProxyRequest) {
-	buf := bytes.NewBufferString(request.Body)
-	var slimLoadRequest interactor.Request
-	if err := json.NewDecoder(buf).Decode(&slimLoadRequest); err != nil {
-		return
+func (sc *slimLoadController) Run(request events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
+	bufRequestBody := bytes.NewBufferString(request.Body)
+	var slimLoadRequest usecase.Request
+	if err := json.NewDecoder(bufRequestBody).Decode(&slimLoadRequest); err != nil {
+		return events.APIGatewayProxyResponse{}, nil
 	}
-	sc.interactor.Handle(slimLoadRequest)
+	response, err := sc.inputPort.Handle(slimLoadRequest)
+	if err != nil {
+		return events.APIGatewayProxyResponse{}, nil
+	}
+
+	bufResponse := new(bytes.Buffer)
+	if err := json.NewEncoder(bufResponse).Encode(response); err != nil {
+		return events.APIGatewayProxyResponse{}, err
+	}
+	return events.APIGatewayProxyResponse{Body: bufResponse.String(), StatusCode: http.StatusOK}, nil
 }

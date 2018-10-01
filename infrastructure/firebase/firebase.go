@@ -39,8 +39,8 @@ func NewFirebase(env, region, bucket, key string) (*Firebase, error) {
 }
 
 // Add is implementation of DatabaseDriver in adapter package.
-// It add Load every user to Firebase.
-func (db *Firebase) Add(userID string, load entity.Load) error {
+// It add Result every user to Firebase.
+func (db *Firebase) Add(userID string, load entity.Result) error {
 	ctx := context.Background()
 	_, _, err := db.Client.Collection("users").Doc(userID).Collection("load").Add(ctx, load)
 	if err != nil {
@@ -54,7 +54,7 @@ func (db *Firebase) Add(userID string, load entity.Load) error {
 func (db *Firebase) Search(userID string, start, end time.Time) ([]entity.Load, error) {
 	ctx := context.Background()
 	iter := db.Client.Collection("users").Doc(userID).Collection("load").Where("date", ">", start).Where("date", "<", end).OrderBy("date", firestore.Asc).Documents(ctx)
-	var results []entity.Load
+	var loads []entity.Load
 	for {
 		doc, err := iter.Next()
 		if err == iterator.Done {
@@ -64,11 +64,17 @@ func (db *Firebase) Search(userID string, start, end time.Time) ([]entity.Load, 
 			return nil, err
 		}
 		data := doc.Data()
-		result := entity.Load{}
+		result := entity.Result{}
 		// TODO: AssertionはAdapterレイヤーでやる気がする.
 		result.Assertion(data)
-		results = append(results, result)
+		load := entity.Load{
+			User: entity.User{
+				ID: userID,
+			},
+			Result: result,
+		}
+		loads = append(loads, load)
 	}
-	return results, nil
+	return loads, nil
 
 }
