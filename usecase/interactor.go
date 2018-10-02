@@ -29,15 +29,11 @@ func NewAddLoadFromLine(outputPort OutputPort, repository DataAccessor, logger *
 }
 
 func (u *addLoadFromLine) Handle(request Request) (Response, error) {
-	t, err := request.date()
-	if err != nil {
-		u.logger.Error("error occurred when parsing date", zap.String("error", err.Error()))
-	}
 	user := entity.User{
 		ID: request.UserID,
 	}
 	load := entity.Result{
-		Date:     t,
+		Date:     request.Date,
 		Weight:   request.Weight,
 		Distance: request.Distance,
 	}
@@ -45,15 +41,7 @@ func (u *addLoadFromLine) Handle(request Request) (Response, error) {
 		u.logger.Error("failed to add load data", zap.String("error", err.Error()))
 	}
 
-	startAt, err := request.startAt()
-	if err != nil {
-		u.logger.Error("error occurred when parsing startAt", zap.String("error", err.Error()))
-	}
-	endAt, err := request.endAt()
-	if err != nil {
-		u.logger.Error("error occurred when parsing endAt", zap.String("error", err.Error()))
-	}
-	loads, err := u.repository.GetLoadsByUserID(user.ID, startAt, endAt)
+	loads, err := u.repository.GetLoadsByUserID(user.ID, request.StartAt, request.EndAt)
 	if err != nil {
 		u.logger.Error("failed to get load data", zap.String("error", err.Error()))
 	}
