@@ -23,13 +23,8 @@ package Interactor #f9d423{
 
 package Controller　#fc913a{
     component SlimLoadController
-    interface SlimLoadReceiver
-    interface SlimLoadPresenter
-    interface ReceiverFactory #00dffc
-
-    SlimLoadController -left-> SlimLoadReceiver
-    ReceiverFactory ..> SlimLoadReceiver
-    SlimLoadController -> SlimLoadPresenter
+    interface Receiver
+    Receiver <-left- SlimLoadController
 }
 
 package DataBase#fc913a{
@@ -53,22 +48,15 @@ package Presenter#fc913a{
     component LambdaPresenter
     component LambdaModel<<DS>>#Green
     interface Responder
-    interface ViewFactory #00dffc
 
     LambdaPresenter --> LambdaModel
     Responder --> LambdaModel
     LambdaPresenter --> Responder
-    ViewFactory .> Responder
 }
 
 package Lambda #ff4e50 {
-   component Receiver
-   component ReceiverFactoryImpl #2b90d9
-   ReceiverFactoryImpl -> Receiver
-   Component responder
-   component ViewFactoryImpl #2b90d9
+   component Handle
 
-   ViewFactoryImpl -> responder
 }
 
 ' Controller => Interactor
@@ -84,15 +72,10 @@ Repository -up-|> DataBaseAccess
 DataBaseFactoryImpl -up-> DataBaseFactory
 
 ' Lambda => Presenter/Controller
-responder -down-|> Responder
-ViewFactoryImpl -down-> ViewFactory
-Receiver -down-|> SlimLoadReceiver
-ReceiverFactoryImpl -down-|> ReceiverFactory
+Handle -down-|> Receiver
 
 ' FireBase => DataBase
 FireBaseSDK -up-|> FireBaseAccess
 FireBaseFactoryImpl -up-|> FireBaseFactory
 
-' Presenter => Controller
-LambdaPresenter -up-|> SlimLoadPresenter
 @enduml

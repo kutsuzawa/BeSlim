@@ -8,7 +8,7 @@ import (
 
 // Driver is the interface that wraps methods for operating db
 type Driver interface {
-	Add(userID string, load entity.Load) error
+	Add(userID string, load entity.Result) error
 	Search(userID string, start, end time.Time) ([]entity.Load, error)
 }
 
@@ -18,8 +18,8 @@ type Repository struct {
 }
 
 // AddLoad add load structure to db
-func (repo *Repository) AddLoad(userID string, load entity.Load) error {
-	if err := repo.Driver.Add(userID, load); err != nil {
+func (repo *Repository) AddLoad(userID string, result entity.Result) error {
+	if err := repo.Driver.Add(userID, result); err != nil {
 		return err
 	}
 	return nil
