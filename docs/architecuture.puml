@@ -1,24 +1,22 @@
 @startuml
 package Interactor #f9d423{
-    interface DataBaseAccess
+    interface DataBaseAccessor
     component LoadGenerator
     component SlimLoadResponse<<DS>>#Green
     component SlimLoadRequest<<DS>>#Green
     interface SlimLoadRequester
     interface SlimLoadResponder
-    interface DataBaseFactory #00dffc
 
-    LoadGenerator -> DataBaseAccess
+    LoadGenerator -right-> DataBaseAccessor
     LoadGenerator -up-> SlimLoadResponse
     LoadGenerator -up-> SlimLoadRequest
     LoadGenerator -up-> SlimLoadResponder
-    SlimLoadRequester <|-- LoadGenerator
+    SlimLoadRequester <|-down- LoadGenerator
 
     package entity #ede574{
         component Load
     }
-    DataBaseAccess -> Load
-    DataBaseFactory ..> DataBaseAccess
+    DataBaseAccessor -right-> Load
 }
 
 package Controller　#fc913a{
@@ -30,28 +28,40 @@ package Controller　#fc913a{
 package DataBase#fc913a{
     component Repository
     interface FireBaseAccess
-    component DataBaseFactoryImpl #2b90d9
-    interface FireBaseFactory #00dffc
 
-    Repository --> FireBaseAccess
-    DataBaseFactoryImpl -> Repository
-    FireBaseFactory ..> FireBaseAccess
+    Repository -down-> FireBaseAccess
 }
 
 package FireBase#ff4e50{
     component FireBaseSDK
-    component FireBaseFactoryImpl #2b90d9
-    FireBaseFactoryImpl -> FireBaseSDK
 }
 
 package Presenter#fc913a{
-    component LambdaPresenter
-    component LambdaModel<<DS>>#Green
-    interface Responder
+    package web {
+        component WebModel #Green
+        component WebPresenter
+        WebPresenter -down-> WebModel
+        interface WebViewer
+        WebViewer -down-> WebModel
+        WebPresenter -right-> WebViewer
+    }
 
-    LambdaPresenter --> LambdaModel
-    Responder --> LambdaModel
-    LambdaPresenter --> Responder
+    package line {
+        component LineModel #Green
+        component LinePresenter
+        LinePresenter -down-> LineModel
+        interface LineViewer
+        LineViewer -down-> LineModel
+        LinePresenter -right-> LineViewer
+    }
+}
+
+package LineView #ff4e50 {
+    component lineview
+}
+
+package WebbView #ff4e50 {
+    component webview
 }
 
 package Lambda #ff4e50 {
@@ -64,18 +74,21 @@ SlimLoadController -down-> SlimLoadRequest
 SlimLoadController -down-> SlimLoadRequester
 
 ' Presenter => Interactor
-LambdaPresenter -down-|> SlimLoadResponder
-LambdaPresenter -down-> SlimLoadResponse
+LinePresenter -down-|> SlimLoadResponder
+WebPresenter -down-|> SlimLoadResponder
+
 
 ' DataBase => Interactor
-Repository -up-|> DataBaseAccess
-DataBaseFactoryImpl -up-> DataBaseFactory
+Repository -up-|> DataBaseAccessor
 
 ' Lambda => Presenter/Controller
 Handle -down-|> Receiver
 
 ' FireBase => DataBase
 FireBaseSDK -up-|> FireBaseAccess
-FireBaseFactoryImpl -up-|> FireBaseFactory
+
+' Presenter => View
+lineview -down-|> LineViewer
+webview -down-|> WebViewer
 
 @enduml
