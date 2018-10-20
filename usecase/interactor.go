@@ -7,10 +7,15 @@ import (
 	"go.uber.org/zap"
 )
 
-// DataAccessor is accessed by Repository
+// DataAccessor accesses by Repository
 type DataAccessor interface {
 	AddLoad(userID string, load entity.Result) error
 	GetLoadsByUserID(userID string, start, end time.Time) ([]entity.Load, error)
+}
+
+// LineAccessor accesses by
+type LineAccessor interface {
+
 }
 
 type addLoadFromLine struct {
